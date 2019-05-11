@@ -9,7 +9,7 @@
  * To view a copy of this license, visit http://creativecommons.org/licenses/by-nc-nd/4.0/.
  */
  
-private["_constructionConfigName", "_position", "_playerUID", "_result", "_requiresTerritory", "_canBePlacedOnRoad", "_allowDuplicateSnap", "_minimumDistanceToTraderZones", "_minimumDistanceToSpawnZones", "_minimumDistanceToOtherTerritories", "_maximumTerritoryRadius", "_positionObject", "_nearestFlags", "_radius", "_buildRights", "_territoryLevelConfigs", "_territoryLevelConfig", "_numberOfConstructionsAllowed"];
+private["_constructionConfigName", "_position", "_playerUID", "_result", "_requiresTerritory", "_canBePlacedOnRoad", "_allowDuplicateSnap", "_minimumDistanceToTraderZones", "_minimumDistanceToSpawnZones", "_minimumDistanceToOtherTerritories", "_maximumTerritoryRadius", "_nearestFlags", "_radius", "_buildRights", "_territoryLevelConfigs", "_territoryLevelConfig", "_numberOfConstructionsAllowed"];
 _constructionConfigName = _this select 0;
 _position = _this select 1;
 _playerUID = _this select 2;
@@ -21,7 +21,7 @@ _minimumDistanceToTraderZones = getNumber (missionConfigFile >> "CfgTerritories"
 _minimumDistanceToSpawnZones = getNumber (missionConfigFile >> "CfgTerritories" >> "minimumDistanceToSpawnZones");
 _minimumDistanceToOtherTerritories = getNumber (missionConfigFile >> "CfgTerritories" >> "minimumDistanceToOtherTerritories");
 _maximumTerritoryRadius = getNumber (missionConfigFile >> "CfgTerritories" >> "maximumRadius");
-try 
+try
 {
 	if ([_position, _minimumDistanceToTraderZones] call ExileClient_util_world_isTraderZoneInRange) then
 	{
@@ -31,15 +31,15 @@ try
 	{
 		throw 5;
 	};
-	if ((AGLtoASL _position) call ExileClient_util_world_isInConcreteMixerZone) then 
+	if (_position call ExileClient_util_world_isInConcreteMixerZone) then
 	{
 		throw 11;
 	};
-	if ((AGLtoASL _position) call ExileClient_util_world_isInNonConstructionZone) then 
+	if (_position call ExileClient_util_world_isInNonConstructionZone) then
 	{
 		throw 10;
 	};
-	if ((AGLtoASL _position) call ExileClient_util_world_isInRadiatedZone) then
+	if (_position call ExileClient_util_world_isInRadiatedZone) then
 	{
 		throw 8;
 	};
@@ -50,32 +50,39 @@ try
 			throw 3;
 		};
 	};
-	if !(_allowDuplicateSnap) then 
+	if (_constructionConfigName isEqualTo "Flag") then
 	{
+		if ([ASLtoAGL _position, _minimumDistanceToOtherTerritories] call ExileClient_util_world_isTerritoryInRange) then
 		{
-			_positionObject = (ASLtoAGL (getPosASL _x));
-			if (_position isEqualTo _positionObject) then
-			{
-				throw 7;
-			};
-		} 
-		forEach (_position nearObjects ["Exile_Construction_Abstract_Static", 3]);
-	};
-	if (_constructionConfigName isEqualTo "Flag") then 
-	{
-		if ([_position, _minimumDistanceToOtherTerritories] call ExileClient_util_world_isTerritoryInRange) then
-		{
-			throw 2; 
+											   
+												
+	
+			throw 2;
 		};
 	}
-	else 
+	else
+   
+													
 	{
-		_nearestFlags = (nearestObjects [_position, ["Exile_Construction_Flag_Static"], _maximumTerritoryRadius]);
+		if !(_allowDuplicateSnap) then
+		{
+			{
+				if (_position isEqualTo (getPosASL _x)) then
+				{
+					throw 7;
+				};
+			}
+			forEach ((ASLtoAGL _position) nearObjects ["Exile_Construction_Abstract_Static", 3]);
+		};
+  
+	  
+  
+		_nearestFlags = (nearestObjects [ASLtoAGL _position, ["Exile_Construction_Flag_Static"], _maximumTerritoryRadius]);
 		if !(_nearestFlags isEqualTo []) then
 		{
 			{
 				_radius = _x getVariable ["ExileTerritorySize", -1];
-				if (((AGLtoASL _position) distance (getPosASL _x)) < _radius) then
+				if ((_position distance (getPosASL _x)) < _radius) then
 				{
 					_buildRights = _x getVariable ["ExileTerritoryBuildRights", []];
 					if (_playerUID in _buildRights) then
@@ -87,10 +94,10 @@ try
 						{
 							throw 9;
 						};
-						
+	  
 						if ((_x getVariable ["ExileTerritoryNumberOfConstructions", 0]) >= _numberOfConstructionsAllowed) then
 						{
-							throw 6; 
+							throw 6;
 						};
 						if (_constructionConfigName isEqualTo "Safe") then{
 							_numberOfSafesAllowed = _territoryLevelConfig select 3;
@@ -121,15 +128,15 @@ try
 				};
 				throw 2;
 			}
-			forEach _nearestFlags; 
+			forEach _nearestFlags;
 		};
-		if (_requiresTerritory) then 
+		if (_requiresTerritory) then
 		{
-			throw 1;	
+			throw 1;
 		};
 	};
 }
-catch 
+catch
 {
 	_result = _exception;
 };
