@@ -9,7 +9,7 @@
  * To view a copy of this license, visit http://creativecommons.org/licenses/by-nc-nd/4.0/.
  */
  
-private["_sessionID", "_parameters", "_objectClassName", "_objectPosition", "_playerObject", "_constructionConfig", "_canBuildHereResult", "_object"];
+private["_sessionID", "_parameters", "_objectClassName", "_objectPosition", "_playerObject", "_constructionConfig", "_canBuildHereResult", "_flag", "_lastAttackedAt", "_constructionBlockDuration", "_object"];
 _sessionID = _this select 0;
 _parameters = _this select 1;
 _objectClassName = _parameters select 0;
@@ -22,7 +22,7 @@ try
 		throw "Player object is null!";
 	};
 	_constructionConfig = ("getText(_x >> 'previewObject') == _objectClassName" configClasses(configFile >> "CfgConstruction")) select 0;
-	_canBuildHereResult = [configName _constructionConfig, (ASLtoAGL (ATLtoASL _objectPosition)), getPlayerUID _playerObject] call ExileClient_util_world_canBuildHere;
+	_canBuildHereResult = [configName _constructionConfig, ATLtoASL _objectPosition, getPlayerUID _playerObject] call ExileClient_util_world_canBuildHere;
 	switch (_canBuildHereResult) do
 	{
 		case 1:
@@ -78,6 +78,19 @@ try
 		throw "Maximum number of Camo Tents reached.";
 		};
 	};
+	_flag = _objectPosition call ExileClient_util_world_getTerritoryAtPosition;
+	if !(isNull _flag) then
+	{
+		_lastAttackedAt = _flag getVariable ["ExileLastAttackAt", false];
+		if !(_lastAttackedAt isEqualTo false) then 
+		{
+			_constructionBlockDuration = getNumber (missionConfigFile >> "CfgTerritories" >> "constructionBlockDuration");
+			if (time - _lastAttackedAt < _constructionBlockDuration * 60) then
+			{
+				throw (format ["Territory has been under attack within the last %1 minutes.", _constructionBlockDuration]);
+			};
+		};
+	};	
 	_object = createVehicle[_objectClassName, _objectPosition, [], 0, "CAN_COLLIDE"];
 	_object setPosATL _objectPosition;
 	_object setVariable ["BIS_enableRandomization", false];
